@@ -6,8 +6,11 @@ A stunning, real-time 3D visualization of simulated global cyberattacks, built w
 
 ---
 
-![Project Screenshot](https://via.placeholder.com/800x400.png?text=Add+a+Screenshot+or+GIF+of+Your+Globe!)
-_(Replace this with a screenshot or, even better, a GIF of your project in action!)_
+![Project Screenshot](
+
+https://github.com/user-attachments/assets/639a65d8-99ce-4ce3-908f-3cb521e0a3f9
+
+)
 
 ## ✨ Features
 
