@@ -38,7 +38,7 @@ To run this project locally, follow these steps:
 1.  **Clone the repository:**
 
     ```bash
-    git clone [https://github.com/Nakul-nvm/CyberTrace-Globe](https://github.com/Nakul-nvm/CyberTrace-Globe)
+    git clone https://github.com/Nakul-nvm/CyberTrace-Globe.git
     cd CyberTrace-Globe
     ```
 
