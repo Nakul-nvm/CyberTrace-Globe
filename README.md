@@ -2,8 +2,7 @@
 
 A stunning, real-time 3D visualization of simulated global cyberattacks, built with Python, FastAPI, and Globe.gl.
 
-**[➡️ View Live Demo Here](https://your-project-name.vercel.app)** ⬅️
-_(Replace with your Vercel URL)_
+**[➡️ View Live Demo Here](https://cyber-trace-globe.vercel.app/)** ⬅️
 
 ---
 
