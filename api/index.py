@@ -1,9 +1,7 @@
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-import os
-import json
-import asyncio
-import random
+from fastapi.responses import StreamingResponse, JSONResponse
+import os, json, asyncio, random
 
 app = FastAPI()
 
@@ -20,49 +18,59 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- NEW: Load our real data from the cache file on startup ---
+# Load cache
+CACHE_FILE = "cache.json"
 REAL_ATTACKS_CACHE = []
-CACHE_FILE = 'cache.json'
 if os.path.exists(CACHE_FILE):
-    with open(CACHE_FILE, 'r') as f:
+    with open(CACHE_FILE, "r") as f:
         REAL_ATTACKS_CACHE = json.load(f)
 
-# This endpoint still serves the cache for the initial load
+# Initial data for the page (points list, not arcs)
 @app.get("/api/attacks")
 def get_attacks():
-    return REAL_ATTACKS_CACHE
+    return JSONResponse(REAL_ATTACKS_CACHE)
 
-ATTACK_COLORS = ['#ff4d4d', '#ff944d', '#4d94ff', '#33cc33', '#ffcc00']
+ATTACK_COLORS = ["#ff4d4d", "#ff944d", "#4d94ff", "#33cc33", "#ffcc00"]
 
-@app.websocket("/ws/attacks")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    print("Client connected to WebSocket.")
-    # Only run the simulator if we have cached data to work with
+# SSE stream that replaces WebSockets
+@app.get("/ws/attacks")
+async def sse_attacks(request: Request):
     if not REAL_ATTACKS_CACHE:
-        print("Cache is empty. Cannot run simulation.")
-        return
+        async def empty_stream():
+            yield "event: info\ndata: Cache is empty\n\n"
+        return StreamingResponse(empty_stream(), media_type="text/event-stream", headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        })
 
-    try:
-        while True:
-            # Randomly pick a REAL attacker and target from our cache
-            attacker = random.choice(REAL_ATTACKS_CACHE)
-            target = random.choice(REAL_ATTACKS_CACHE)
-            
-            # Ensure attacker and target are not the same
-            if attacker['ip'] == target['ip']:
-                continue
+    async def event_generator():
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
 
-            new_attack = {
-                "startLat": attacker['lat'],
-                "startLon": attacker['lon'],
-                "endLat": target['lat'],
-                "endLon": target['lon'],
-                "color": random.choice(ATTACK_COLORS)
-            }
-            
-            await websocket.send_json(new_attack)
-            await asyncio.sleep(1) # Send one attack every second
-            
-    except Exception as e:
-        print(f"Client disconnected or error: {e}")
+                attacker = random.choice(REAL_ATTACKS_CACHE)
+                target = random.choice(REAL_ATTACKS_CACHE)
+                if attacker.get("ip") == target.get("ip"):
+                    await asyncio.sleep(0)  # yield
+                    continue
+
+                new_attack = {
+                    "startLat": attacker["lat"],
+                    "startLon": attacker["lon"],
+                    "endLat": target["lat"],
+                    "endLon": target["lon"],
+                    "color": random.choice(ATTACK_COLORS)
+                }
+
+                yield f"data: {json.dumps(new_attack)}\n\n"
+                await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            pass
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream", headers={
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no"
+    })

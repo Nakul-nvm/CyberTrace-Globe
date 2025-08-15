@@ -5,20 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Live Attack Map</title>
     <style>
-      body {
-        margin: 0;
-      }
-      #globeViz {
-        width: 100vw;
-        height: 100vh;
-      }
+      body { margin: 0; }
+      #globeViz { width: 100vw; height: 100vh; }
     </style>
   </head>
   <body>
     <script src="//unpkg.com/globe.gl"></script>
-
     <div id="globeViz"></div>
-
     <script>
       const globeContainer = document.getElementById("globeViz");
       let currentAttacks = [];
@@ -28,54 +21,49 @@
         .backgroundImageUrl("//unpkg.com/three-globe/example/img/night-sky.png")
         .backgroundColor("rgba(0,0,0,0)")
         .arcsData(currentAttacks)
-        .arcStartLat((d) => d.startLat)
-        .arcStartLng((d) => d.startLon)
-        .arcEndLat((d) => d.endLat)
-        .arcEndLng((d) => d.endLon)
-        .arcColor((d) => d.color)
+        .arcStartLat(d => d.startLat)
+        .arcStartLng(d => d.startLon)
+        .arcEndLat(d => d.endLat)
+        .arcEndLng(d => d.endLon)
+        .arcColor(d => d.color)
         .arcStroke(0.3)
         .arcDashLength(0.7)
         .arcDashGap(0.2)
         .arcDashAnimateTime(1200)
         .pointsData([])
-        .pointLat((p) => p.lat)
-        .pointLng((p) => p.lon)
-        .pointColor((p) => p.color)
+        .pointLat(p => p.lat)
+        .pointLng(p => p.lon)
+        .pointColor(p => p.color || "#ffffff")
         .pointRadius(0.4)
         .pointAltitude(0.01);
 
-      // --- 1. Load the initial data using a relative URL ---
+      // Initial points from cache (REAL_ATTACKS_CACHE entries with {ip, lat, lon, ...})
       fetch("/api/attacks")
-        .then((res) => res.json())
-        .then((attacks) => {
-          currentAttacks = attacks;
-          myGlobe.arcsData(currentAttacks);
-
-          const pointsData = attacks.flatMap((attack) => [
-            { lat: attack.startLat, lon: attack.startLon, color: attack.color },
-            { lat: attack.endLat, lon: attack.endLon, color: attack.color },
-          ]);
-          myGlobe.pointsData(pointsData);
+        .then(res => res.json())
+        .then(cache => {
+          const points = cache.map(e => ({ lat: e.lat, lon: e.lon, color: "#cccccc" }));
+          myGlobe.pointsData(points);
         });
 
-      // --- 2. Connect to the WebSocket using a dynamic and secure URL ---
-      const socket = new WebSocket(`wss://${window.location.host}/ws/attacks`);
+      // Replace WebSocket with SSE (EventSource uses HTTP/HTTPS, no wss needed)
+      const es = new EventSource("/ws/attacks");
 
-      socket.onmessage = function (event) {
+      es.onmessage = (event) => {
         const newAttack = JSON.parse(event.data);
         currentAttacks.push(newAttack);
-
-        if (currentAttacks.length > 30) {
-          currentAttacks.shift();
-        }
+        if (currentAttacks.length > 30) currentAttacks.shift();
 
         myGlobe.arcsData(currentAttacks);
 
-        const pointsData = currentAttacks.flatMap((attack) => [
-          { lat: attack.startLat, lon: attack.startLon, color: attack.color },
-          { lat: attack.endLat, lon: attack.endLon, color: attack.color },
+        const pointsData = currentAttacks.flatMap(a => [
+          { lat: a.startLat, lon: a.startLon, color: a.color },
+          { lat: a.endLat,   lon: a.endLon,   color: a.color }
         ]);
         myGlobe.pointsData(pointsData);
+      };
+
+      es.onerror = () => {
+        // Optional: backoff / reconnect hints are handled by EventSource automatically
       };
     </script>
   </body>
