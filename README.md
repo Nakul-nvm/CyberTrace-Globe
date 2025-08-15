@@ -38,8 +38,8 @@ To run this project locally, follow these steps:
 1.  **Clone the repository:**
 
     ```bash
-    git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
-    cd your-repo-name
+    git clone [https://github.com/Nakul-nvm/CyberTrace-Globe](https://github.com/Nakul-nvm/CyberTrace-Globe)
+    cd CyberTrace-Globe
     ```
 
 2.  **Create a virtual environment and install dependencies:**
