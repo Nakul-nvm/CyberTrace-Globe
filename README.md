@@ -6,11 +6,7 @@ A stunning, real-time 3D visualization of simulated global cyberattacks, built w
 
 ---
 
-![Project Screenshot](
-
 https://github.com/user-attachments/assets/639a65d8-99ce-4ce3-908f-3cb521e0a3f9
-
-)
 
 ## ✨ Features
 
