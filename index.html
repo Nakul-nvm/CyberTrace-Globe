@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Attack Map</title>
+    <style>
+      body {
+        margin: 0;
+      }
+      #globeViz {
+        width: 100vw;
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="//unpkg.com/globe.gl"></script>
+
+    <div id="globeViz"></div>
+
+    <script>
+      const globeContainer = document.getElementById("globeViz");
+      let currentAttacks = [];
+
+      const myGlobe = Globe()(globeContainer)
+        .globeImageUrl("//unpkg.com/three-globe/example/img/earth-night.jpg")
+        .backgroundImageUrl("//unpkg.com/three-globe/example/img/night-sky.png")
+        .backgroundColor("rgba(0,0,0,0)")
+
+        // --- Arcs Layer ---
+        .arcsData(currentAttacks)
+        .arcStartLat((d) => d.startLat)
+        .arcStartLng((d) => d.startLon)
+        .arcEndLat((d) => d.endLat)
+        .arcEndLng((d) => d.endLon)
+        .arcColor((d) => d.color) // Use the color from our data
+        .arcStroke(0.3)
+        .arcDashLength(0.7)
+        .arcDashGap(0.2)
+        .arcDashAnimateTime(1200)
+
+        // --- Points Layer (for the glowing dots) ---
+        .pointsData([]) // We will populate this dynamically
+        .pointLat((p) => p.lat)
+        .pointLng((p) => p.lon)
+        .pointColor((p) => p.color) // Use the same color as the arc
+        .pointRadius(0.4)
+        .pointAltitude(0.01); // This makes the points "glow" above the surface
+
+      // --- WebSocket Connection ---
+      const socket = new WebSocket("ws://127.0.0.1:8000/ws/attacks");
+
+      socket.onmessage = function (event) {
+        const newAttack = JSON.parse(event.data);
+        currentAttacks.push(newAttack);
+
+        if (currentAttacks.length > 30) {
+          currentAttacks.shift();
+        }
+
+        // Update the arcs data
+        myGlobe.arcsData(currentAttacks);
+
+        // --- NEW: Create and update the points data ---
+        // We create two points for each arc: one start, one end
+        const pointsData = currentAttacks.flatMap((attack) => [
+          { lat: attack.startLat, lon: attack.startLon, color: attack.color },
+          { lat: attack.endLat, lon: attack.endLon, color: attack.color },
+        ]);
+
+        myGlobe.pointsData(pointsData);
+      };
+    </script>
+  </body>
+</html>
