@@ -2,7 +2,7 @@
 
 A stunning, real-time 3D visualization of simulated global cyberattacks, built with Python, FastAPI, and Globe.gl.
 
-**[➡️ View Live Demo Here](https://cyber-trace-globe.vercel.app/)** ⬅️
+**Live Demo:** [CyberTrace Globe](https://cyber-trace-globe.vercel.app/)
 
 ---
 
@@ -18,7 +18,7 @@ https://github.com/user-attachments/assets/639a65d8-99ce-4ce3-908f-3cb521e0a3f9
 
 ## 🛠️ Tech Stack
 
-- **Backend**: Python, FastAPI, Uvicorn, WebSockets
+- **Backend**: Python, FastAPI, Uvicorn, Server-Sent Events (SSE)
 - **Frontend**: HTML5, CSS3, JavaScript, Globe.gl (Three.js)
 - **Data Source**: AbuseIPDB API (for initial data caching)
 - **Deployment**: Vercel
